@@ -1,21 +1,30 @@
 import streamlit as st
 import pandas as pd
 import google.generativeai as genai
-from dotenv import load_dotenv
 import requests
 import os
+from dotenv import load_dotenv
 
+# Load API Keys
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash")
 
-st.title("AI Strategic Decision Support System")
+# Page Title
+st.set_page_config(
+    page_title="AI Strategic Decision Support System",
+    page_icon="🛡️",
+    layout="wide"
+)
 
-st.sidebar.title("Menu")
+st.title("🛡️ AI Strategic Decision Support System")
+
+# Sidebar
+st.sidebar.title("Navigation")
 
 page = st.sidebar.radio(
-    "Select",
+    "Select Page",
     [
         "Dashboard",
         "Threat Analysis",
@@ -24,55 +33,21 @@ page = st.sidebar.radio(
     ]
 )
 
+# ===========================
+# DASHBOARD
+# ===========================
+
 if page == "Dashboard":
 
     st.header("Dashboard")
 
-    c1, c2, c3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-    c1.metric("Threat Level", "Medium")
-    c2.metric("Active Alerts", "5")
-    c3.metric("Countries", "20")
+    col1.metric("Threat Level", "Medium")
+    col2.metric("Active Alerts", "5")
+    col3.metric("Countries", "5")
 
-    country = st.selectbox(
-        "Select Country",
-        [
-            "India",
-            "China",
-            "Pakistan",
-            "USA",
-            "Russia"
-        ]
-    )
-
-    if country == "India":
-        level = "Low"
-        score = 20
-
-    elif country == "China":
-        level = "Medium"
-        score = 60
-
-    elif country == "Pakistan":
-        level = "High"
-        score = 90
-
-    elif country == "USA":
-        level = "Low"
-        score = 15
-
-    else:
-        level = "Medium"
-        score = 50
-
-    st.subheader("Current Threat")
-
-    st.write("Country :", country)
-    st.write("Threat Level :", level)
-
-    st.progress(score)
-
-    st.subheader("Threat Data")
+    st.subheader("Threat Score")
 
     data = pd.DataFrame({
         "Country": [
@@ -82,7 +57,7 @@ if page == "Dashboard":
             "USA",
             "Russia"
         ],
-        "Threat": [
+        "Threat Score": [
             20,
             60,
             90,
@@ -92,6 +67,11 @@ if page == "Dashboard":
     })
 
     st.bar_chart(data.set_index("Country"))
+
+    st.dataframe(data, use_container_width=True)
+    # ===========================
+# THREAT ANALYSIS
+# ===========================
 
 elif page == "Threat Analysis":
 
@@ -108,86 +88,135 @@ elif page == "Threat Analysis":
         ]
     )
 
-if country == "India":
-    st.write("Threat Level : Low")
-    st.progress(20)
-    st.success("Border situation is stable.")
+    if country == "India":
+        st.success("Threat Level : Low")
+        st.progress(20)
+        st.write("Current Situation:")
+        st.write("- Border is stable.")
+        st.write("- Regular security monitoring is active.")
+        st.write("- No major threats reported.")
 
-elif country == "China":
-    st.write("Threat Level : Medium")
-    st.progress(60)
-    st.warning("Border monitoring is required.")
+    elif country == "China":
+        st.warning("Threat Level : Medium")
+        st.progress(60)
+        st.write("Current Situation:")
+        st.write("- Border activities are being monitored.")
+        st.write("- Intelligence agencies remain alert.")
+        st.write("- Increased surveillance is recommended.")
 
-elif country == "Pakistan":
-    st.write("Threat Level : High")
-    st.progress(90)
-    st.error("High security alert.")
+    elif country == "Pakistan":
+        st.error("Threat Level : High")
+        st.progress(90)
+        st.write("Current Situation:")
+        st.write("- High security alert.")
+        st.write("- Border forces are on standby.")
+        st.write("- Continuous monitoring is required.")
 
-elif country == "USA":
-    st.write("Threat Level : Low")
-    st.progress(15)
-    st.success("No major security concern.")
+    elif country == "USA":
+        st.success("Threat Level : Low")
+        st.progress(15)
+        st.write("Current Situation:")
+        st.write("- No significant defense threat.")
+        st.write("- Security status is stable.")
 
-else:
-    st.write("Threat Level : Medium")
-    st.progress(50)
-    st.info("Regular monitoring is active.")
+    else:
+        st.info("Threat Level : Medium")
+        st.progress(50)
+        st.write("Current Situation:")
+        st.write("- Monitoring international activities.")
+        st.write("- Security agencies remain active.")
+        # ===========================
+# LATEST DEFENSE NEWS
+# ===========================
 
-if page == "News":
+elif page == "News":
 
     st.header("Latest Defense News")
 
-    api_key = os.getenv("GNEWS_API_KEY")
+    api_key = os.getenv("NEWS_API_KEY")
 
-    url = f"https://gnews.io/api/v4/search?q=defense&lang=en&max=5&apikey={api_key}"
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-
-        data = response.json()
-
-        articles = data.get("articles", [])
-
-        if len(articles) == 0:
-            st.info("No news found.")
-
-        else:
-
-            for article in articles:
-
-                st.subheader(article["title"])
-
-                if article["description"]:
-                    st.write(article["description"])
-
-                st.write(article["url"])
-
-                st.write("--------------------------------")
+    if not api_key:
+        st.error("NEWS_API_KEY not found. Please add it to your .env file.")
 
     else:
 
-        st.error("News could not be loaded.")
-        st.write("Status Code :", response.status_code)
+        url = (
+            f"https://gnews.io/api/v4/search?"
+            f"q=defense OR military&lang=en&max=8&apikey={api_key}"
+        )
 
+        try:
+            response = requests.get(url)
 
-else:
+            if response.status_code == 200:
 
-    st.header("AI Assistant")
+                data = response.json()
+                articles = data.get("articles", [])
 
-    question = st.text_area("Ask a defense or security related question")
+                if not articles:
+                    st.info("No news found.")
+
+                else:
+
+                    for article in articles:
+
+                        st.subheader(article.get("title", "No Title"))
+
+                        description = article.get("description")
+                        if description:
+                            st.write(description)
+
+                        source = article.get("source", {}).get("name", "Unknown")
+                        st.caption(f"Source: {source}")
+
+                        if article.get("url"):
+                            st.markdown(f"[Read Full Article]({article['url']})")
+
+                        st.divider()
+
+            else:
+                st.error(f"News API Error : {response.status_code}")
+
+        except Exception as e:
+            st.error("Unable to fetch news.")
+            st.write(e)
+            # ===========================
+# AI ASSISTANT
+# ===========================
+
+elif page == "AI Assistant":
+
+    st.header("AI Defense Assistant")
+
+    question = st.text_area(
+        "Ask any defense, cybersecurity or military related question"
+    )
 
     if st.button("Analyze"):
 
         if question.strip() == "":
-
             st.warning("Please enter your question.")
 
         else:
 
             try:
 
-                response = model.generate_content(question)
+                prompt = f"""
+You are an AI Strategic Decision Support Assistant.
+
+Answer the following question in a simple and professional way.
+
+Question:
+{question}
+
+Provide:
+1. Summary
+2. Risk Level
+3. Possible Impact
+4. Recommendation
+"""
+
+                response = model.generate_content(prompt)
 
                 st.subheader("AI Response")
 
@@ -196,4 +225,12 @@ else:
             except Exception as e:
 
                 st.error("Something went wrong.")
+
                 st.write(e)
+
+# ===========================
+# FOOTER
+# ===========================
+
+st.markdown("---")
+st.caption("AI Strategic Decision Support System | BSERC Internship Project")
