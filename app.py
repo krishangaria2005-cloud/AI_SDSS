@@ -135,9 +135,11 @@ elif page == "Threat Analysis":
     else:
 
         st.write("Threat Level : Medium")
-        st.progress(50)
-        st.info("Regular monitoring is active.")
-        if page == "News":
+       st.progress(50)
+    
+st.info("Regular monitoring is active.")
+
+if page == "News":
 
     st.header("Latest Defense News")
 
