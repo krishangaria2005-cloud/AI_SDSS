@@ -108,36 +108,30 @@ elif page == "Threat Analysis":
         ]
     )
 
-    if country == "India":
+if country == "India":
+    st.write("Threat Level : Low")
+    st.progress(20)
+    st.success("Border situation is stable.")
 
-        st.write("Threat Level : Low")
-        st.progress(20)
-        st.success("Border situation is stable.")
+elif country == "China":
+    st.write("Threat Level : Medium")
+    st.progress(60)
+    st.warning("Border monitoring is required.")
 
-    elif country == "China":
+elif country == "Pakistan":
+    st.write("Threat Level : High")
+    st.progress(90)
+    st.error("High security alert.")
 
-        st.write("Threat Level : Medium")
-        st.progress(60)
-        st.warning("Border monitoring is required.")
+elif country == "USA":
+    st.write("Threat Level : Low")
+    st.progress(15)
+    st.success("No major security concern.")
 
-    elif country == "Pakistan":
-
-        st.write("Threat Level : High")
-        st.progress(90)
-        st.error("High security alert.")
-
-    elif country == "USA":
-
-        st.write("Threat Level : Low")
-        st.progress(15)
-        st.success("No major security concern.")
-
-    else:
-
-        st.write("Threat Level : Medium")
-       st.progress(50)
-    
-st.info("Regular monitoring is active.")
+else:
+    st.write("Threat Level : Medium")
+    st.progress(50)
+    st.info("Regular monitoring is active.")
 
 if page == "News":
 
