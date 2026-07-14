@@ -5,37 +5,54 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# Load API Keys
+# -----------------------------
+# Load Environment Variables
+# -----------------------------
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash")
 
-# Page Title
+# -----------------------------
+# Page Configuration
+# -----------------------------
 st.set_page_config(
     page_title="AI Strategic Decision Support System",
     page_icon="🛡️",
     layout="wide"
 )
 
+# -----------------------------
+# Title
+# -----------------------------
 st.title("🛡️ AI Strategic Decision Support System")
 
+st.write(
+    """
+This system helps monitor defense threats, analyze countries,
+view defense news, and answer military related questions using AI.
+"""
+)
+
+# -----------------------------
 # Sidebar
+# -----------------------------
 st.sidebar.title("Navigation")
 
 page = st.sidebar.radio(
-    "Select Page",
+    "Choose Module",
     [
         "Dashboard",
         "Threat Analysis",
         "News",
-        "AI Assistant"
+        "AI Assistant",
+        "Threat Map"
     ]
 )
 
-# ===========================
+# ==================================================
 # DASHBOARD
-# ===========================
+# ==================================================
 
 if page == "Dashboard":
 
@@ -47,38 +64,66 @@ if page == "Dashboard":
     col2.metric("Active Alerts", "5")
     col3.metric("Countries", "5")
 
+    st.success("System Status : Online")
+    st.warning("Real-Time Threat Monitoring Enabled")
+
     st.subheader("Threat Score")
 
-    data = pd.DataFrame({
-        "Country": [
-            "India",
-            "China",
-            "Pakistan",
-            "USA",
-            "Russia"
-        ],
-        "Threat Score": [
-            20,
-            60,
-            90,
-            15,
-            50
-        ]
-    })
+    data = pd.DataFrame(
+        {
+            "Country": [
+                "India",
+                "China",
+                "Pakistan",
+                "USA",
+                "Russia"
+            ],
+            "Threat Score": [
+                20,
+                60,
+                90,
+                15,
+                50
+            ]
+        }
+    )
 
     st.bar_chart(data.set_index("Country"))
 
     st.dataframe(data, use_container_width=True)
-    # ===========================
-# THREAT ANALYSIS
-# ===========================
+    st.subheader("Threat Trend Analysis")
 
-elif page == "Threat Analysis":
+trend_data = pd.DataFrame({
+    "Month": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun"
+    ],
+    "Threat Score": [
+        25,
+        40,
+        55,
+        48,
+        70,
+        60
+    ]
+})
+
+st.line_chart(trend_data.set_index("Month"))
+
+    # ==================================================
+# THREAT ANALYSIS
+# ==================================================
+
+if page == "Threat Analysis":
 
     st.header("Threat Analysis")
 
     country = st.selectbox(
-        "Choose Country",
+        "Select Country",
         [
             "India",
             "China",
@@ -88,46 +133,53 @@ elif page == "Threat Analysis":
         ]
     )
 
-    if country == "India":
-        st.success("Threat Level : Low")
-        st.progress(20)
-        st.write("Current Situation:")
-        st.write("- Border is stable.")
-        st.write("- Regular security monitoring is active.")
-        st.write("- No major threats reported.")
+    threat_data = {
+        "India": {
+            "level": "Low",
+            "score": 20,
+            "message": "Border situation is stable."
+        },
+        "China": {
+            "level": "Medium",
+            "score": 60,
+            "message": "Border monitoring is required."
+        },
+        "Pakistan": {
+            "level": "High",
+            "score": 90,
+            "message": "High security alert."
+        },
+        "USA": {
+            "level": "Low",
+            "score": 15,
+            "message": "No major security concern."
+        },
+        "Russia": {
+            "level": "Medium",
+            "score": 50,
+            "message": "Situation is under observation."
+        }
+    }
 
-    elif country == "China":
-        st.warning("Threat Level : Medium")
-        st.progress(60)
-        st.write("Current Situation:")
-        st.write("- Border activities are being monitored.")
-        st.write("- Intelligence agencies remain alert.")
-        st.write("- Increased surveillance is recommended.")
+    info = threat_data[country]
 
-    elif country == "Pakistan":
-        st.error("Threat Level : High")
-        st.progress(90)
-        st.write("Current Situation:")
-        st.write("- High security alert.")
-        st.write("- Border forces are on standby.")
-        st.write("- Continuous monitoring is required.")
+    st.subheader(f"{country} Threat Report")
 
-    elif country == "USA":
-        st.success("Threat Level : Low")
-        st.progress(15)
-        st.write("Current Situation:")
-        st.write("- No significant defense threat.")
-        st.write("- Security status is stable.")
+    st.write("Threat Level :", info["level"])
+
+    st.progress(info["score"])
+
+    if info["level"] == "High":
+        st.error(info["message"])
+
+    elif info["level"] == "Medium":
+        st.warning(info["message"])
 
     else:
-        st.info("Threat Level : Medium")
-        st.progress(50)
-        st.write("Current Situation:")
-        st.write("- Monitoring international activities.")
-        st.write("- Security agencies remain active.")
-        # ===========================
-# LATEST DEFENSE NEWS
-# ===========================
+        st.success(info["message"])
+        # ==================================================
+# DEFENSE NEWS
+# ==================================================
 
 elif page == "News":
 
@@ -136,75 +188,79 @@ elif page == "News":
     api_key = os.getenv("NEWS_API_KEY")
 
     if not api_key:
-        st.error("NEWS_API_KEY not found. Please add it to your .env file.")
+        st.error("NEWS_API_KEY not found in .env file.")
 
     else:
 
         url = (
             f"https://gnews.io/api/v4/search?"
-            f"q=defense OR military&lang=en&max=8&apikey={api_key}"
+            f"q=defense&lang=en&max=5&apikey={api_key}"
         )
 
         try:
+
             response = requests.get(url)
 
             if response.status_code == 200:
 
-                data = response.json()
-                articles = data.get("articles", [])
+                news = response.json()
+                articles = news.get("articles", [])
 
                 if not articles:
-                    st.info("No news found.")
+                    st.info("No news available.")
 
                 else:
 
                     for article in articles:
 
-                        st.subheader(article.get("title", "No Title"))
+                        st.subheader(article.get("title"))
 
-                        description = article.get("description")
-                        if description:
-                            st.write(description)
+                        if article.get("description"):
+                            st.write(article.get("description"))
 
-                        source = article.get("source", {}).get("name", "Unknown")
-                        st.caption(f"Source: {source}")
+                        st.write("**Source:**", article["source"]["name"])
 
-                        if article.get("url"):
-                            st.markdown(f"[Read Full Article]({article['url']})")
+                        st.markdown(
+                            f"[Read Full Article]({article.get('url')})"
+                        )
 
                         st.divider()
 
             else:
-                st.error(f"News API Error : {response.status_code}")
+
+                st.error("Unable to load news.")
 
         except Exception as e:
-            st.error("Unable to fetch news.")
+
+            st.error("Something went wrong while loading news.")
             st.write(e)
-            # ===========================
+            # ==================================================
 # AI ASSISTANT
-# ===========================
+# ==================================================
 
 elif page == "AI Assistant":
 
     st.header("AI Defense Assistant")
 
     question = st.text_area(
-        "Ask any defense, cybersecurity or military related question"
+        "Ask a question about defense, military or cybersecurity"
     )
 
     if st.button("Analyze"):
 
         if question.strip() == "":
-            st.warning("Please enter your question.")
+            st.warning("Please enter a question.")
 
         else:
 
-            try:
+            with st.spinner("Generating AI response..."):
 
-                prompt = f"""
+                try:
+
+                    prompt = f"""
 You are an AI Strategic Decision Support Assistant.
 
-Answer the following question in a simple and professional way.
+Answer the question in a clear and simple format.
 
 Question:
 {question}
@@ -216,21 +272,27 @@ Provide:
 4. Recommendation
 """
 
-                response = model.generate_content(prompt)
+                    response = model.generate_content(prompt)
 
-                st.subheader("AI Response")
+                    st.subheader("AI Response")
+                    st.write(response.text)
 
-                st.write(response.text)
+                except Exception as e:
 
-            except Exception as e:
-
-                st.error("Something went wrong.")
-
-                st.write(e)
-
-# ===========================
-# FOOTER
+                    st.error("Unable to generate response.")
+                    st.write(e)
+                    # ===========================
+# THREAT MAP
 # ===========================
 
 st.markdown("---")
-st.caption("AI Strategic Decision Support System | BSERC Internship Project")
+st.header("🌍 Global Threat Map")
+
+map_data = pd.DataFrame({
+    "lat": [28.6139, 39.9042, 33.6844, 38.9072, 55.7558],
+    "lon": [77.2090, 116.4074, 73.0479, -77.0369, 37.6173],
+    "Country": ["India", "China", "Pakistan", "USA", "Russia"],
+    "Threat": [20, 60, 90, 15, 50]
+})
+
+st.map(map_data)
